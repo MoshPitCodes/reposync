@@ -109,7 +109,7 @@ graph TB
     subgraph "Skills"
         E --> E1[artifacts-builder]
         E --> E2[theme-factory]
-        E --> E3[document-skills/]
+        E --> E3[document-skills]
         E3 --> E3a[pdf]
         E3 --> E3b[docx]
         E3 --> E3c[pptx]
@@ -117,11 +117,11 @@ graph TB
     end
 
     subgraph "Slash Commands"
-        D --> D1[/systematic-implementation]
-        D --> D2[/systematic-diagnosis]
-        D --> D3[/structured-reflection]
-        D --> D4[/structured-contemplation]
-        D --> D5[/claude-create-architecture-docs]
+        D --> D1["systematic-implementation"]
+        D --> D2["systematic-diagnosis"]
+        D --> D3["structured-reflection"]
+        D --> D4["structured-contemplation"]
+        D --> D5["claude-create-architecture-docs"]
     end
 
     subgraph "GitHub Configuration"
