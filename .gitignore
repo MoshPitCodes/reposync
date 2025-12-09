@@ -1,0 +1,110 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment variables
+.env*
+!.env.example
+
+# Build output
+/build
+/dist
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Mac OS
+.DS_Store
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Generated files
+proto/v1/*.pb.go
+
+# Local configuration
+.env
+.env.local
+secrets.nix
+
+# Claude AI
+.claude/
+
+# Claude Flow / AI Agent data directories
+.swarm/
+.claude-flow/
+.claude-plugin/
+.hive-mind/
+.ruv-swarm/
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+crash.log
+crash.*.log
+*.tfvars
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+.terraformrc
+terraform.rc
+tfplan
+*.tfplan
+
+# Ansible
+ansible/inventory/generated-inventory.ini
+ansible/inventory/group_vars/all/vault.yml
+
+# Sensitive files
+**/secrets/
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Talos Configuration (contains cluster secrets)
+talosconfig
+kubeconfig
+clusterconfig/
+talos/*.yaml
+!talos/talconfig.yaml.example
+
+# Kubernetes
+*.kubeconfig

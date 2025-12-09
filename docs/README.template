@@ -1,0 +1,174 @@
+<!-- DO NOT TOUCH THIS SECTION#1: START -->
+<h1 align="center">
+   <img src="./.github/assets/logo/nixos-logo.png  " width="100px" />
+   <br>
+      devkit | A Comprehensive Developer Toolkit
+   <br>
+      <img src="./.github/assets/pallet/pallet-0.png" width="800px" /> <br>
+
+   <div align="center">
+      <p></p>
+      <div align="center">
+         <a href="https://github.com/MoshPitCodes/moshpitlabs.nix/stargazers">
+            <img src="https://img.shields.io/github/stars/MoshPitCodes/moshpitlabs.nix?color=FABD2F&labelColor=282828&style=for-the-badge&logo=starship&logoColor=FABD2F">
+         </a>
+         <a href="https://github.com/MoshPitCodes/moshpitlabs.nix/">
+            <img src="https://img.shields.io/github/repo-size/MoshPitCodes/moshpitlabs.nix?color=B16286&labelColor=282828&style=for-the-badge&logo=github&logoColor=B16286">
+         </a>
+         <a href="https://nixos.org">
+            <img src="https://img.shields.io/badge/NixOS-unstable-blue.svg?style=for-the-badge&labelColor=282828&logo=NixOS&logoColor=458588&color=458588">
+         </a>
+         <a href="https://github.com/MoshPitCodes/moshpitlabs.nix/blob/main/LICENSE">
+            <img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=MIT&colorA=282828&colorB=98971A&logo=unlicense&logoColor=98971A&"/>
+         </a>
+      </div>
+      <br>
+   </div>
+</h1>
+
+<br/>
+<!-- DO NOT TOUCH THIS SECTION#1: END -->
+
+# 🗃️ Overview
+
+[Describe the project briefly]
+
+<br/>
+
+## 📚 Project Structure
+
+[<relative folder path>](<actually linked file/folder>) <short description> <with optional [Link](link)
+
+<br/>
+
+## 📓 Project Components
+| Component                   | Responsibility                                                                            |
+| --------------------------- | :---------------------------------------------------------------------------------- |
+| **<Component Name>** | <Description> |
+| **<Component Name>** | <Description> |
+| **<Component Name>** | <Description> |
+| **<Component Name>** | <Description> |
+| **<Component Name>** | <Description> |
+| **<Component Name>** | <Description> |
+
+<br/>
+
+# 📐 Architecture
+
+[Create ASCII and Mermaid diagram of the architecture of this code base.]
+
+<br/>
+
+# 🚀 **[Header1]**
+
+> [!CAUTION]
+> Customizing system configurations, particularly those affecting operating systems, may lead to unforeseen effects and potentially disrupt your system's standard operations. Although I've personally tested these settings on my own hardware, they might not perform identically on your specific setup.
+> **I cannot assume responsibility for any problems that might result from implementing this configuration.**
+
+> [!WARNING]
+> You **must** examine the configuration details and adjust them according to your specific requirements before proceeding with using devkit.
+
+<br/>
+
+## 1. **[Header2]**
+
+First, install NixOS using an [official ISO image](https://nixos.org/download.html#nixos-iso).
+> [!NOTE]
+> This was tested with the following parameters:
+> - Graphical installer using the official GNOME ISO image
+> - ```No desktop``` or ```GNOME``` option during installation
+> - Intel 13th Gen desktop & mobile hardware (especially relevant regarding drivers!)
+> - VMWare Workstation or Player (v17+) on Microsoft Windows 11
+
+For now, this repository assumes an already installed NixOS system. I might end up putting this into configurable scripts specifically for remote installation on baremetal or virtual hosts. This is a nice-to-have for me currently and will not happen until I have the need to do so and the time to refactor a lot of stuff for my homelab.
+<br/>
+
+## 2. **[Header2]**
+
+```bash
+nix-shell -p git
+git clone https://github.com/MoshPitCodes/moshpitlabs.nix
+cd moshpitlabs.nix
+```
+
+<br/>
+
+## 3. **[Header2]**
+> [!TIP]
+> To ensure you understand what you're executing, it's advisable to review the code base or at minimum consult the documentation thoroughly prior to running devkit.
+
+### [Header3]
+
+<br/>
+
+### [Header3]
+
+<br/>
+
+### [Header3]
+
+<br/>
+
+# 📝 [Header1]
+
+<details>
+<summary>
+[description]
+</summary>
+
+
+</details>
+
+<details>
+<summary>
+[description]
+</summary>
+
+</details>
+
+<details>
+<summary>
+[description]
+</summary>
+
+</details>
+<br/>
+
+# 🖼️ Gallery
+
+<p align="center">
+   <img src="./.github/assets/screenshots/system-usage.png" style="margin-bottom: 15px;"/> <br>
+   Screenshots last updated <b>2025-03-25</b>
+</p>
+
+<br/>
+
+# 👥 Credits
+
+Other resources and links:
+
+  - [<Resource Title>](<Resource Link>): <Comment>
+  - [<Resource Title>](<Resource Link>): <Comment>
+
+<br/>
+
+<!-- DO NOT TOUCH THIS SECTION#2: START -->
+<!-- # ✨ Stars History -->
+
+<br/>
+
+<p align="center"><img src="https://api.star-history.com/svg?repos=MoshPitCodes/moshpitlabs.nix&type=Timeline&theme=dark" /></p>
+
+<br/>
+
+<p align="center"><img src="https://raw.githubusercontent.com/catppuccin/catppuccin/main/assets/footers/gray0_ctp_on_line.svg?sanitize=true" /></p>
+
+<!-- end of page, send back to the top -->
+
+<div align="right">
+  <a href="#readme">Back to the Top</a>
+</div>
+<!-- DO NOT TOUCH THIS SECTION#2: END -->
+
+<!-- Links -->
+[<Resource Title>]: <Resource Link>
