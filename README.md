@@ -5,7 +5,6 @@
    <br>
 
    <div align="center">
-      <p>A powerful CLI tool for synchronizing repositories from GitHub or local sources with an interactive terminal UI powered by Bubble Tea</p>
       <div align="center">
          <a href="https://github.com/MoshPitCodes/repo.sync/stargazers">
             <img src="https://img.shields.io/github/stars/MoshPitCodes/repo.sync?color=7C3AED&labelColor=1E1E2E&style=for-the-badge&logo=starship&logoColor=7C3AED">
