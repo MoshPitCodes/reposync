@@ -34,6 +34,7 @@ type Repository struct {
 	Stars       int
 	CloneURL    string
 	IsPrivate   bool
+	IsArchived  bool
 }
 
 // Client handles GitHub API interactions using go-gh.
@@ -78,6 +79,7 @@ func (c *Client) listRepos(endpoint string) ([]Repository, error) {
 			CloneURL    string `json:"clone_url"`
 			SSHURL      string `json:"ssh_url"`
 			Private     bool   `json:"private"`
+			Archived    bool   `json:"archived"`
 		}
 
 		url := fmt.Sprintf("%s?per_page=%d&page=%d&sort=updated&direction=desc", endpoint, perPage, page)
@@ -100,6 +102,7 @@ func (c *Client) listRepos(endpoint string) ([]Repository, error) {
 				Stars:       repo.Stars,
 				CloneURL:    repo.SSHURL, // Prefer SSH for authenticated access
 				IsPrivate:   repo.Private,
+				IsArchived:  repo.Archived,
 			})
 		}
 
@@ -162,6 +165,7 @@ func (c *Client) GetRepoDetails(owner, repoName string) (*Repository, error) {
 		CloneURL    string `json:"clone_url"`
 		SSHURL      string `json:"ssh_url"`
 		Private     bool   `json:"private"`
+		Archived    bool   `json:"archived"`
 	}
 
 	endpoint := fmt.Sprintf("repos/%s/%s", owner, repoName)
@@ -178,6 +182,7 @@ func (c *Client) GetRepoDetails(owner, repoName string) (*Repository, error) {
 		Stars:       repo.Stars,
 		CloneURL:    repo.SSHURL,
 		IsPrivate:   repo.Private,
+		IsArchived:  repo.Archived,
 	}, nil
 }
 
@@ -215,6 +220,7 @@ func (c *Client) SearchRepos(query string, owner string) ([]Repository, error) {
 			CloneURL    string `json:"clone_url"`
 			SSHURL      string `json:"ssh_url"`
 			Private     bool   `json:"private"`
+			Archived    bool   `json:"archived"`
 		} `json:"items"`
 	}
 
@@ -241,6 +247,7 @@ func (c *Client) SearchRepos(query string, owner string) ([]Repository, error) {
 			Stars:       item.Stars,
 			CloneURL:    item.SSHURL,
 			IsPrivate:   item.Private,
+			IsArchived:  item.Archived,
 		})
 	}
 

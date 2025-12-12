@@ -32,6 +32,7 @@ type ListItem interface {
 	Title() string
 	Description() string
 	Metadata() map[string]string
+	IsArchived() bool
 }
 
 // GitHubRepoItem wraps a GitHub repository as a ListItem.
@@ -69,9 +70,17 @@ func (i GitHubRepoItem) Metadata() map[string]string {
 	} else {
 		meta["visibility"] = "🌐 Public"
 	}
+	if i.repo.IsArchived {
+		meta["archived"] = "📦 Archived"
+	}
 	meta["clone_url"] = i.repo.CloneURL
 
 	return meta
+}
+
+// IsArchived returns true if the repository is archived.
+func (i GitHubRepoItem) IsArchived() bool {
+	return i.repo.IsArchived
 }
 
 // LocalRepoItem wraps a local repository as a ListItem.
@@ -109,6 +118,11 @@ func (i LocalRepoItem) Metadata() map[string]string {
 	}
 
 	return meta
+}
+
+// IsArchived returns false for local repositories (they cannot be archived).
+func (i LocalRepoItem) IsArchived() bool {
+	return false
 }
 
 // SortMode represents different ways to sort repositories.
@@ -322,29 +336,46 @@ func (m *ListModel) handleNavigation(msg tea.KeyMsg) (*ListModel, tea.Cmd) {
 	return m, nil
 }
 
-// sortItems sorts items based on current sort mode.
+// sortItems sorts items based on current sort mode, with archived repos at the end.
 func (m *ListModel) sortItems() {
-	switch m.sortMode {
-	case SortByName:
-		sort.Slice(m.items, func(i, j int) bool {
-			return strings.ToLower(m.items[i].Title()) < strings.ToLower(m.items[j].Title())
-		})
-
-	case SortByStars:
-		sort.Slice(m.items, func(i, j int) bool {
-			// Try to get stars from metadata
-			starsI := m.items[i].Metadata()["stars"]
-			starsJ := m.items[j].Metadata()["stars"]
-			// For simplicity, just compare strings (works for formatted star counts)
-			return starsJ < starsI
-		})
-
-	case SortByUpdated:
-		// For now, same as name
-		sort.Slice(m.items, func(i, j int) bool {
-			return strings.ToLower(m.items[i].Title()) < strings.ToLower(m.items[j].Title())
-		})
+	// Separate active and archived items
+	var active, archived []ListItem
+	for _, item := range m.items {
+		if item.IsArchived() {
+			archived = append(archived, item)
+		} else {
+			active = append(active, item)
+		}
 	}
+
+	// Sort function based on current mode
+	sortFn := func(items []ListItem) {
+		switch m.sortMode {
+		case SortByName:
+			sort.Slice(items, func(i, j int) bool {
+				return strings.ToLower(items[i].Title()) < strings.ToLower(items[j].Title())
+			})
+
+		case SortByStars:
+			sort.Slice(items, func(i, j int) bool {
+				starsI := items[i].Metadata()["stars"]
+				starsJ := items[j].Metadata()["stars"]
+				return starsJ < starsI
+			})
+
+		case SortByUpdated:
+			sort.Slice(items, func(i, j int) bool {
+				return strings.ToLower(items[i].Title()) < strings.ToLower(items[j].Title())
+			})
+		}
+	}
+
+	// Sort each group independently
+	sortFn(active)
+	sortFn(archived)
+
+	// Recombine: active first, then archived
+	m.items = append(active, archived...)
 }
 
 // filterItems filters items based on search input.
@@ -415,11 +446,32 @@ func (m *ListModel) View(width, height int) string {
 		}
 	}
 
+	// Count active vs archived repos for section header
+	activeCount := 0
+	archivedCount := 0
+	for _, item := range m.filtered {
+		if item.IsArchived() {
+			archivedCount++
+		} else {
+			activeCount++
+		}
+	}
+
 	// Render items
+	archivedHeaderRendered := false
 	for i := start; i < end; i++ {
 		item := m.filtered[i]
 		isSelected := i == m.selected
 		isChecked := m.checked[item.ID()]
+		isArchived := item.IsArchived()
+
+		// Render archived section header when we reach first archived item in viewport
+		if isArchived && !archivedHeaderRendered && archivedCount > 0 && activeCount > 0 {
+			b.WriteString("\n")
+			b.WriteString(RenderSectionHeader(fmt.Sprintf("Archived (%d)", archivedCount)))
+			b.WriteString("\n\n")
+			archivedHeaderRendered = true
+		}
 
 		// Main line
 		title := item.Title()
@@ -431,7 +483,12 @@ func (m *ListModel) View(width, height int) string {
 			title += " - " + truncate(item.Description(), maxDescLen)
 		}
 
-		b.WriteString(RenderListItem(title, isSelected, isChecked))
+		// Use appropriate renderer based on archived status
+		if isArchived {
+			b.WriteString(RenderArchivedListItem(title, isSelected, isChecked))
+		} else {
+			b.WriteString(RenderListItem(title, isSelected, isChecked))
+		}
 		b.WriteString("\n")
 
 		// Metadata line for selected item
@@ -439,7 +496,7 @@ func (m *ListModel) View(width, height int) string {
 			meta := item.Metadata()
 			if len(meta) > 0 {
 				var metaParts []string
-				// Order: language, stars, visibility, branch, size, type, path
+				// Order: language, stars, visibility, archived, branch, size, type, path
 				if v, ok := meta["language"]; ok {
 					metaParts = append(metaParts, v)
 				}
@@ -447,6 +504,9 @@ func (m *ListModel) View(width, height int) string {
 					metaParts = append(metaParts, v)
 				}
 				if v, ok := meta["visibility"]; ok {
+					metaParts = append(metaParts, v)
+				}
+				if v, ok := meta["archived"]; ok {
 					metaParts = append(metaParts, v)
 				}
 				if v, ok := meta["branch"]; ok {

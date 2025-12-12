@@ -113,6 +113,25 @@ var (
 			Foreground(accentColor).
 			Bold(true)
 
+	// Archived item styles
+	archivedItemStyle = lipgloss.NewStyle().
+				Foreground(dimmedColor).
+				Italic(true).
+				Padding(0, 1).
+				MarginLeft(1)
+
+	selectedArchivedItemStyle = archivedItemStyle.
+					Bold(true).
+					BorderLeft(true).
+					BorderStyle(lipgloss.ThickBorder()).
+					BorderForeground(mutedColor)
+
+	// Section header style
+	sectionHeaderStyle = lipgloss.NewStyle().
+				Foreground(mutedColor).
+				Bold(true).
+				Padding(1, 0, 0, 1)
+
 	// Border styles
 	borderStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -348,6 +367,34 @@ func RenderListItem(text string, selected, checked bool) string {
 // RenderListHeader renders a section header for lists.
 func RenderListHeader(text string) string {
 	return listHeaderStyle.Render(text)
+}
+
+// RenderSectionHeader renders a section divider header for grouping items.
+func RenderSectionHeader(text string) string {
+	return sectionHeaderStyle.Render("─── " + text + " ───")
+}
+
+// RenderArchivedListItem renders a list item with archived (dimmed) styling.
+func RenderArchivedListItem(text string, selected, checked bool) string {
+	var prefix string
+	if checked {
+		prefix = successStyle.Render("✓")
+	} else {
+		prefix = lipgloss.NewStyle().Foreground(dimmedColor).Render("○")
+	}
+
+	content := prefix + " " + text
+
+	if selected {
+		return selectedArchivedItemStyle.Render("▸ " + content)
+	}
+
+	style := archivedItemStyle
+	if checked {
+		style = style.Foreground(successColor)
+	}
+
+	return style.Render("  " + content)
 }
 
 // RenderButton renders a styled button.
