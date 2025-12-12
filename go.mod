@@ -1,4 +1,4 @@
-module github.com/MoshPitCodes/repo.sync
+module github.com/MoshPitCodes/reposync
 
 go 1.24
 

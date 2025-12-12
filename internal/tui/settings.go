@@ -22,7 +22,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/MoshPitCodes/repo.sync/internal/config"
+	"github.com/MoshPitCodes/reposync/internal/config"
 )
 
 // SettingsField represents a field in the settings form.

@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/MoshPitCodes/repo.sync/cmd"
+	"github.com/MoshPitCodes/reposync/cmd"
 )
 
 func main() {

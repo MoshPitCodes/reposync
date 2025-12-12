@@ -22,8 +22,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/MoshPitCodes/repo.sync/internal/github"
-	"github.com/MoshPitCodes/repo.sync/internal/local"
+	"github.com/MoshPitCodes/reposync/internal/github"
+	"github.com/MoshPitCodes/reposync/internal/local"
 )
 
 // ListItem is the generic interface for items in the list.

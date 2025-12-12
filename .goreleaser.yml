@@ -109,14 +109,14 @@ changelog:
 release:
   github:
     owner: MoshPitCodes
-    name: repo.sync
+    name: reposync
   draft: false
   prerelease: auto
   mode: replace
   header: |
     ## repo-sync {{.Tag}}
 
-    **Full Changelog**: https://github.com/MoshPitCodes/repo.sync/compare/{{.PreviousTag}}...{{.Tag}}
+    **Full Changelog**: https://github.com/MoshPitCodes/reposync/compare/{{.PreviousTag}}...{{.Tag}}
   footer: |
     ## Installation
 
@@ -125,7 +125,7 @@ release:
 
     ### Using Go
     ```bash
-    go install github.com/MoshPitCodes/repo.sync@{{.Tag}}
+    go install github.com/MoshPitCodes/reposync@{{.Tag}}
     ```
 
     ### Verification
@@ -144,7 +144,7 @@ release:
 #     commit_author:
 #       name: goreleaserbot
 #       email: bot@goreleaser.com
-#     homepage: https://github.com/MoshPitCodes/repo.sync
+#     homepage: https://github.com/MoshPitCodes/reposync
 #     description: "CLI tool for synchronizing repositories from GitHub or local sources"
 #     license: "Apache-2.0"
 #     install: |
