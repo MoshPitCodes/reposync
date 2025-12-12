@@ -266,6 +266,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case SwitchModeMsg:
 		m.mode = msg.Mode
 		m.list.SetLoading(true)
+
+		// Handle owner switching based on mode
+		switch msg.Mode {
+		case ModePersonal:
+			// Reset owner to username when switching to personal mode
+			m.owner = m.username
+			return m, m.loadRepositories()
+
+		case ModeOrganization:
+			// Check if organizations are available
+			if len(m.orgs) == 0 {
+				m.list.SetError(fmt.Errorf("no organizations found - use 'o' to select an owner"))
+				m.list.SetLoading(false)
+				return m, nil
+			}
+			// Set owner to first organization
+			m.owner = m.orgs[0]
+			return m, m.loadRepositories()
+
+		case ModeLocal:
+			// Local mode doesn't use owner
+			return m, m.loadRepositories()
+		}
+
 		return m, m.loadRepositories()
 
 	case SelectOwnerMsg:
