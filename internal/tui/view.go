@@ -96,7 +96,11 @@ func (m Model) renderHeader() string {
 		headerVersionStyle.Render(rightSection),
 	)
 
-	return headerStyle.Width(m.width).Render(content)
+	// Only set width if we have a valid width value
+	if m.width > 0 {
+		return headerStyle.Width(m.width).Render(content)
+	}
+	return headerStyle.Render(content)
 }
 
 // renderTabs renders the tab bar.
@@ -138,7 +142,11 @@ func (m Model) renderOwnerBar() string {
 		BorderBottom(true).
 		BorderForeground(borderColor)
 
-	return style.Width(m.width).Render(content)
+	// Only set width if we have a valid width value
+	if m.width > 0 {
+		return style.Width(m.width).Render(content)
+	}
+	return style.Render(content)
 }
 
 // renderList renders the repository list.
@@ -165,7 +173,11 @@ func (m Model) renderProgress() string {
 		BorderTop(true).
 		BorderForeground(borderColor)
 
-	return style.Width(m.width).Render(progressView)
+	// Only set width if we have a valid width value
+	if m.width > 0 {
+		return style.Width(m.width).Render(progressView)
+	}
+	return style.Render(progressView)
 }
 
 // renderFooter renders the footer with keyboard shortcuts.
@@ -259,13 +271,29 @@ func (m Model) renderHelpOverlay() string {
 
 // renderWithOverlay renders content with an overlay centered on top.
 func (m Model) renderWithOverlay(base, overlay string) string {
+	// Simply use lipgloss.Place to center the overlay.
+	// The overlay will be shown on a backdrop, and when it's dismissed,
+	// the base view will be regenerated properly.
+
+	// Use the terminal dimensions for placement
+	width := m.width
+	height := m.height
+
+	if width == 0 {
+		width = 100
+	}
+	if height == 0 {
+		height = 30
+	}
+
+	// Place the overlay in the center with a semi-transparent background effect
 	return lipgloss.Place(
-		m.width,
-		m.height,
+		width,
+		height,
 		lipgloss.Center,
 		lipgloss.Center,
 		overlay,
-		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.Color("#000000")),
+		lipgloss.WithWhitespaceChars("░"),
+		lipgloss.WithWhitespaceForeground(lipgloss.Color("#2a2a2a")),
 	)
 }
