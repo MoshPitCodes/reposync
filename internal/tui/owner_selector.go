@@ -25,14 +25,23 @@ import (
 
 // OwnerSelectorModel manages the owner selector dropdown.
 type OwnerSelectorModel struct {
+	// Complex type
+	filterInput textinput.Model
+
+	// Slice (24 bytes)
+	orgs []string
+
+	// Strings (16 bytes each)
 	selectedOwner string
-	isOrg         bool
 	username      string
-	orgs          []string
-	expanded      bool
-	filterInput   textinput.Model
-	cursor        int
-	width         int
+
+	// Ints (8 bytes each)
+	cursor int
+	width  int
+
+	// Bools (1 byte each)
+	isOrg    bool
+	expanded bool
 }
 
 // NewOwnerSelectorModel creates a new owner selector model.

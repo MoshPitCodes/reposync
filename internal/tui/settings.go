@@ -22,7 +22,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/MoshPitCodes/repo.sync/internal/config"
+	"github.com/MoshPitCodes/reposync/internal/config"
 )
 
 // SettingsField represents a field in the settings form.
@@ -36,19 +36,29 @@ type SettingsField struct {
 
 // SettingsModel manages the settings overlay modal.
 type SettingsModel struct {
-	store        *config.ConfigStore
-	fields       []SettingsField
-	inputs       []textinput.Model
-	selected     int
-	compactMode  bool
-	width        int
-	height       int
+	// Slices (24 bytes each)
+	fields []SettingsField
+	inputs []textinput.Model
+
+	// Pointer (8 bytes)
+	store *config.ConfigStore
+
+	// Ints (8 bytes each)
+	selected int
+	width    int
+	height   int
+
+	// Bool (1 byte)
+	compactMode bool
 }
 
 // NewSettingsModel creates a new settings model.
 func NewSettingsModel(store *config.ConfigStore) *SettingsModel {
 	// Load persisted config
-	persistedCfg, _ := store.Load()
+	persistedCfg, err := store.Load()
+	if err != nil {
+		persistedCfg = &config.PersistedConfig{}
+	}
 
 	fields := []SettingsField{
 		{

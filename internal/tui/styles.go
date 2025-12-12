@@ -35,10 +35,6 @@ var (
 	fgColor        = lipgloss.Color("#E5E7EB")   // Light foreground
 	borderColor    = lipgloss.Color("#374151")   // Border gray
 
-	// Base styles
-	baseStyle = lipgloss.NewStyle().
-			Padding(0, 2)
-
 	// Header styles
 	headerStyle = lipgloss.NewStyle().
 			Foreground(fgColor).
@@ -73,7 +69,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(borderColor)
 
-	selectedMenuItemStyle = menuItemStyle.Copy().
+	selectedMenuItemStyle = menuItemStyle.
 				Foreground(primaryColor).
 				Bold(true).
 				Background(bgColor).
@@ -98,7 +94,7 @@ var (
 			Padding(0, 1).
 			MarginLeft(1)
 
-	selectedListItemStyle = listItemStyle.Copy().
+	selectedListItemStyle = listItemStyle.
 				Foreground(fgColor).
 				Bold(true).
 				Background(bgColor).
@@ -106,7 +102,7 @@ var (
 				BorderStyle(lipgloss.ThickBorder()).
 				BorderForeground(secondaryColor)
 
-	checkedItemStyle = listItemStyle.Copy().
+	checkedItemStyle = listItemStyle.
 				Foreground(successColor)
 
 	listMetadataStyle = lipgloss.NewStyle().
@@ -123,7 +119,7 @@ var (
 			BorderForeground(borderColor).
 			Padding(1, 2)
 
-	focusedBorderStyle = borderStyle.Copy().
+	focusedBorderStyle = borderStyle.
 				BorderForeground(secondaryColor)
 
 	boxStyle = lipgloss.NewStyle().
@@ -142,7 +138,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(primaryColor)
 
-	activeButtonStyle = buttonStyle.Copy().
+	activeButtonStyle = buttonStyle.
 				Background(secondaryColor).
 				BorderForeground(secondaryColor).
 				Bold(true)
@@ -221,17 +217,6 @@ var (
 				Foreground(mutedColor).
 				Italic(true)
 
-	// Table styles
-	tableHeaderStyle = lipgloss.NewStyle().
-				Foreground(primaryColor).
-				Bold(true).
-				BorderStyle(lipgloss.NormalBorder()).
-				BorderBottom(true).
-				BorderForeground(mutedColor)
-
-	tableCellStyle = lipgloss.NewStyle().
-			Padding(0, 1)
-
 	// Input styles
 	inputStyle = lipgloss.NewStyle().
 			Foreground(fgColor).
@@ -240,7 +225,7 @@ var (
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(borderColor)
 
-	focusedInputStyle = inputStyle.Copy().
+	focusedInputStyle = inputStyle.
 				BorderForeground(secondaryColor).
 				BorderStyle(lipgloss.ThickBorder())
 

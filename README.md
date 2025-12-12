@@ -6,13 +6,13 @@
 
    <div align="center">
       <div align="center">
-         <a href="https://github.com/MoshPitCodes/repo.sync/stargazers">
-            <img src="https://img.shields.io/github/stars/MoshPitCodes/repo.sync?color=7C3AED&labelColor=1E1E2E&style=for-the-badge&logo=starship&logoColor=7C3AED">
+         <a href="https://github.com/MoshPitCodes/reposync/stargazers">
+            <img src="https://img.shields.io/github/stars/MoshPitCodes/reposync?color=7C3AED&labelColor=1E1E2E&style=for-the-badge&logo=starship&logoColor=7C3AED">
          </a>
-         <a href="https://github.com/MoshPitCodes/repo.sync/">
-            <img src="https://img.shields.io/github/repo-size/MoshPitCodes/repo.sync?color=06B6D4&labelColor=1E1E2E&style=for-the-badge&logo=github&logoColor=06B6D4">
+         <a href="https://github.com/MoshPitCodes/reposync/">
+            <img src="https://img.shields.io/github/repo-size/MoshPitCodes/reposync?color=06B6D4&labelColor=1E1E2E&style=for-the-badge&logo=github&logoColor=06B6D4">
          </a>
-         <a href="https://github.com/MoshPitCodes/repo.sync/blob/main/LICENSE">
+         <a href="https://github.com/MoshPitCodes/reposync/blob/main/LICENSE">
             <img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=Apache-2.0&colorA=1E1E2E&colorB=10B981&logo=apache&logoColor=10B981&"/>
          </a>
          <a href="https://go.dev/">
@@ -151,7 +151,7 @@ graph TB
 ### Detailed Structure
 
 ```
-repo.sync/
+reposync/
 ├── cmd/
 │   ├── root.go           # Root command and TUI launcher with tab support
 │   ├── github.go         # GitHub subcommand (batch/interactive)
@@ -215,7 +215,7 @@ Before installing repo-sync, ensure you have the following dependencies:
 ### Using Go Install (Recommended)
 
 ```bash
-go install github.com/MoshPitCodes/repo.sync@latest
+go install github.com/MoshPitCodes/reposync@latest
 ```
 
 This will install the `repo-sync` binary to your `$GOPATH/bin` directory.
@@ -224,8 +224,8 @@ This will install the `repo-sync` binary to your `$GOPATH/bin` directory.
 
 ```bash
 # Clone the repository
-git clone https://github.com/MoshPitCodes/repo.sync.git
-cd repo.sync
+git clone https://github.com/MoshPitCodes/reposync.git
+cd reposync
 
 # Build the binary
 go build -o repo-sync
@@ -424,7 +424,7 @@ repo-sync
 ```bash
 # Clone multiple repositories from a specific owner
 repo-sync github --owner MoshPitCodes --batch \
-  repo.sync \
+  reposync \
   moshpitcodes.template \
   moshpitcodes.nixos
 ```
@@ -494,7 +494,7 @@ Other resources and inspiration:
 
 <br/>
 
-<p align="center"><img src="https://api.star-history.com/svg?repos=MoshPitCodes/repo.sync&type=Timeline&theme=dark" /></p>
+<p align="center"><img src="https://api.star-history.com/svg?repos=MoshPitCodes/reposync&type=Timeline&theme=dark" /></p>
 
 <br/>
 

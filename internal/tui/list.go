@@ -22,8 +22,8 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/MoshPitCodes/repo.sync/internal/github"
-	"github.com/MoshPitCodes/repo.sync/internal/local"
+	"github.com/MoshPitCodes/reposync/internal/github"
+	"github.com/MoshPitCodes/reposync/internal/local"
 )
 
 // ListItem is the generic interface for items in the list.
@@ -136,17 +136,30 @@ func (s SortMode) String() string {
 
 // ListModel manages a generic list of items.
 type ListModel struct {
-	items       []ListItem
-	filtered    []ListItem
-	selected    int
-	checked     map[string]bool
+	// Complex type
 	searchInput textinput.Model
+
+	// Interface/error (16 bytes)
+	err error
+
+	// Slices (24 bytes each)
+	items    []ListItem
+	filtered []ListItem
+
+	// Map (8 bytes pointer)
+	checked map[string]bool
+
+	// Ints (8 bytes each)
+	selected int
+	pageSize int
+
+	// Enum (platform-dependent)
+	sortMode SortMode
+
+	// Bools (1 byte each)
 	searching   bool
-	sortMode    SortMode
 	compactMode bool
-	pageSize    int
 	loading     bool
-	err         error
 }
 
 // NewListModel creates a new list model.

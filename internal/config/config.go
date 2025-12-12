@@ -46,7 +46,11 @@ func Load() (*Config, error) {
 	// REPO_SYNC_SOURCE_DIRS: Colon-separated list of source directories to scan
 	sourceDirsEnv := os.Getenv("REPO_SYNC_SOURCE_DIRS")
 	if sourceDirsEnv != "" {
-		cfg.SourceDirs = strings.Split(sourceDirsEnv, ":")
+		dirs := strings.Split(sourceDirsEnv, ":")
+		cfg.SourceDirs = make([]string, len(dirs))
+		for i, dir := range dirs {
+			cfg.SourceDirs[i] = expandTilde(dir)
+		}
 	}
 
 	return cfg, nil
@@ -76,7 +80,10 @@ func (c *Config) MergeWithPersisted(p *PersistedConfig) *Config {
 			merged.TargetDir = expandTilde(p.TargetDir)
 		} else {
 			// Default if neither env nor persisted
-			homeDir, _ := os.UserHomeDir()
+			homeDir, err := os.UserHomeDir()
+			if err != nil {
+				homeDir = "."
+			}
 			merged.TargetDir = filepath.Join(homeDir, "repos")
 		}
 	}
@@ -86,7 +93,11 @@ func (c *Config) MergeWithPersisted(p *PersistedConfig) *Config {
 	}
 
 	if len(merged.SourceDirs) == 0 && p != nil && len(p.SourceDirs) > 0 {
-		merged.SourceDirs = p.SourceDirs
+		// Expand tilde in each source directory path
+		merged.SourceDirs = make([]string, len(p.SourceDirs))
+		for i, dir := range p.SourceDirs {
+			merged.SourceDirs[i] = expandTilde(dir)
+		}
 	}
 
 	return merged

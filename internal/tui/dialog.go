@@ -23,11 +23,16 @@ import (
 
 // RepoExistsDialogModel manages the repository exists confirmation dialog.
 type RepoExistsDialogModel struct {
-	repoName  string
-	repoPath  string
+	// Strings (16 bytes each)
+	repoName string
+	repoPath string
+	mode     string
+
+	// Int (8 bytes)
 	repoIndex int
-	mode      string
-	visible   bool
+
+	// Bool (1 byte)
+	visible bool
 }
 
 // NewRepoExistsDialogModel creates a new repository exists dialog.

@@ -19,36 +19,43 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/MoshPitCodes/repo.sync/internal/config"
-	"github.com/MoshPitCodes/repo.sync/internal/github"
-	"github.com/MoshPitCodes/repo.sync/internal/local"
+	"github.com/MoshPitCodes/reposync/internal/config"
+	"github.com/MoshPitCodes/reposync/internal/github"
+	"github.com/MoshPitCodes/reposync/internal/local"
 )
 
 // Model is the main Bubble Tea model with unified single-view architecture.
 type Model struct {
-	config       *config.Config
-	store        *config.ConfigStore
-	mode         ViewMode
-	owner        string
-	username     string
-	orgs         []string
-
-	tabs          *TabBarModel
-	list          *ListModel
-	settings      *SettingsModel
-	progress      *InlineProgressModel
-	ownerSelector *OwnerSelectorModel
+	// Pointers (8 bytes each)
+	config           *config.Config
+	store            *config.ConfigStore
+	tabs             *TabBarModel
+	list             *ListModel
+	settings         *SettingsModel
+	progress         *InlineProgressModel
+	ownerSelector    *OwnerSelectorModel
 	repoExistsDialog *RepoExistsDialogModel
+	githubClient     *github.Client
 
+	// Slices (24 bytes)
+	orgs []string
+
+	// Strings (16 bytes each)
+	owner    string
+	username string
+
+	// Ints (8 bytes each)
 	width  int
 	height int
 
+	// Enum (platform-dependent, typically 4-8 bytes)
+	mode ViewMode
+
+	// Bools (1 byte each, grouped together)
 	showSettings bool
 	showHelp     bool
 	syncing      bool
 	quitting     bool
-
-	githubClient *github.Client
 }
 
 // NewModel creates a new unified model starting in Personal mode.
@@ -59,7 +66,10 @@ func NewModel(cfg *config.Config) (Model, error) {
 	}
 
 	// Load persisted config and merge
-	persistedCfg, _ := store.Load()
+	persistedCfg, err := store.Load()
+	if err != nil {
+		persistedCfg = &config.PersistedConfig{}
+	}
 	mergedCfg := cfg.MergeWithPersisted(persistedCfg)
 
 	// Initialize GitHub client and get username
@@ -355,7 +365,10 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.showSettings = false
 		if closeMsg.Save {
 			// Reload config
-			persistedCfg, _ := m.store.Load()
+			persistedCfg, err := m.store.Load()
+			if err != nil {
+				persistedCfg = &config.PersistedConfig{}
+			}
 			m.config = m.config.MergeWithPersisted(persistedCfg)
 			// Update list compact mode from saved config
 			m.list.SetCompactMode(persistedCfg.CompactMode)
