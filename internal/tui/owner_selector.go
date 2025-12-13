@@ -286,8 +286,7 @@ var (
 				BorderForeground(secondaryColor).
 				Padding(2, 3).
 				Background(bgColor).
-				Foreground(fgColor).
-				BorderBackground(bgLightColor)
+				Foreground(fgColor)
 
 	ownerDropdownHeaderStyle = lipgloss.NewStyle().
 					Foreground(secondaryColor).

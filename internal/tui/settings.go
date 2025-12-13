@@ -241,8 +241,7 @@ var (
 				BorderForeground(primaryColor).
 				Padding(2, 4).
 				Background(bgColor).
-				Foreground(fgColor).
-				BorderBackground(bgLightColor)
+				Foreground(fgColor)
 
 	settingsOverlayTitleStyle = lipgloss.NewStyle().
 					Foreground(primaryColor).
