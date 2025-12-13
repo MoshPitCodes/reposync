@@ -458,10 +458,32 @@ reposync local --batch \
 
 # 🖼️ Gallery
 
+### Personal Repositories (Tab 1)
+Browse and sync your personal GitHub repositories with detailed metadata display.
+
 <p align="center">
-   Screenshots coming soon
-   <br>
-   <i>The interactive TUI with tabbed interface, repository selection, and real-time progress tracking</i>
+   <img src=".github/assets/screenshots/Screenshot_2025_12_13_at_15h51m27s.png" alt="Personal Repositories Tab" width="800">
+</p>
+
+### Organization Repositories (Tab 2)
+Switch between organizations and browse their repositories with the owner selector.
+
+<p align="center">
+   <img src=".github/assets/screenshots/Screenshot_2025_12_13_at_15h51m32s.png" alt="Organization Repositories Tab" width="800">
+</p>
+
+### Local Repositories (Tab 3)
+Discover and sync local Git repositories from your configured directories.
+
+<p align="center">
+   <img src=".github/assets/screenshots/Screenshot_2025_12_13_at_15h51m37s.png" alt="Local Repositories Tab" width="800">
+</p>
+
+### Template Sync (Tab 4)
+Sync files from a template repository to multiple local repositories at once.
+
+<p align="center">
+   <img src=".github/assets/screenshots/Screenshot_2025_12_13_at_15h51m42s.png" alt="Template Sync Tab" width="800">
 </p>
 
 <br/>
