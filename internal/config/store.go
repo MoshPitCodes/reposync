@@ -23,10 +23,11 @@ import (
 
 // PersistedConfig represents configuration stored in the config file.
 type PersistedConfig struct {
-	TargetDir    string   `json:"target_dir,omitempty"`
-	SourceDirs   []string `json:"source_dirs,omitempty"`
-	DefaultOwner string   `json:"default_owner,omitempty"`
-	RecentOwners []string `json:"recent_owners,omitempty"`
+	TargetDir       string   `json:"target_dir,omitempty"`
+	SourceDirs      []string `json:"source_dirs,omitempty"`
+	DefaultOwner    string   `json:"default_owner,omitempty"`
+	RecentOwners    []string `json:"recent_owners,omitempty"`
+	RecentTemplates []string `json:"recent_templates,omitempty"`
 }
 
 // ConfigStore handles persistent storage of configuration.
@@ -105,5 +106,25 @@ func (p *PersistedConfig) AddRecentOwner(owner string) {
 	// Keep only last 10
 	if len(p.RecentOwners) > 10 {
 		p.RecentOwners = p.RecentOwners[:10]
+	}
+}
+
+// AddRecentTemplate adds a template to the recent templates list.
+// Template format: "owner/repo" for GitHub or "local:path" for local templates.
+func (p *PersistedConfig) AddRecentTemplate(template string) {
+	// Remove if already exists
+	for i, t := range p.RecentTemplates {
+		if t == template {
+			p.RecentTemplates = append(p.RecentTemplates[:i], p.RecentTemplates[i+1:]...)
+			break
+		}
+	}
+
+	// Add to front
+	p.RecentTemplates = append([]string{template}, p.RecentTemplates...)
+
+	// Keep only last 10
+	if len(p.RecentTemplates) > 10 {
+		p.RecentTemplates = p.RecentTemplates[:10]
 	}
 }

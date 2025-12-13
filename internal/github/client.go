@@ -15,6 +15,7 @@
 package github
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -27,14 +28,30 @@ import (
 
 // Repository represents a GitHub repository with relevant metadata.
 type Repository struct {
-	Name        string
-	FullName    string
-	Description string
-	Language    string
-	Stars       int
-	CloneURL    string
-	IsPrivate   bool
-	IsArchived  bool
+	Name          string
+	FullName      string
+	Description   string
+	Language      string
+	Stars         int
+	CloneURL      string
+	IsPrivate     bool
+	IsArchived    bool
+	DefaultBranch string
+}
+
+// TreeEntry represents a single entry in a repository tree.
+type TreeEntry struct {
+	Path string `json:"path"`
+	Type string `json:"type"` // "blob" for files, "tree" for directories
+	SHA  string `json:"sha"`
+	Size int64  `json:"size,omitempty"`
+}
+
+// TreeResponse represents the response from GitHub's Git Trees API.
+type TreeResponse struct {
+	SHA       string      `json:"sha"`
+	Truncated bool        `json:"truncated"`
+	Entries   []TreeEntry `json:"tree"`
 }
 
 // Client handles GitHub API interactions using go-gh.
@@ -295,4 +312,62 @@ func (c *Client) RefreshRepo(repoPath string) error {
 	}
 
 	return nil
+}
+
+// GetDefaultBranch returns the default branch of a repository.
+func (c *Client) GetDefaultBranch(owner, repo string) (string, error) {
+	var result struct {
+		DefaultBranch string `json:"default_branch"`
+	}
+
+	endpoint := fmt.Sprintf("repos/%s/%s", owner, repo)
+
+	if err := c.client.Get(endpoint, &result); err != nil {
+		return "", fmt.Errorf("failed to fetch repository: %w", err)
+	}
+
+	return result.DefaultBranch, nil
+}
+
+// GetRepoTree fetches the complete file tree of a repository recursively.
+func (c *Client) GetRepoTree(owner, repo, branch string) (*TreeResponse, error) {
+	var result TreeResponse
+
+	endpoint := fmt.Sprintf("repos/%s/%s/git/trees/%s?recursive=1", owner, repo, branch)
+
+	if err := c.client.Get(endpoint, &result); err != nil {
+		return nil, fmt.Errorf("failed to fetch repository tree: %w", err)
+	}
+
+	return &result, nil
+}
+
+// GetFileContent fetches the content of a single file from a repository.
+// The content is automatically base64 decoded.
+func (c *Client) GetFileContent(owner, repo, path, ref string) ([]byte, error) {
+	var result struct {
+		Content  string `json:"content"`
+		Encoding string `json:"encoding"`
+		SHA      string `json:"sha"`
+		Size     int64  `json:"size"`
+	}
+
+	endpoint := fmt.Sprintf("repos/%s/%s/contents/%s?ref=%s", owner, repo, path, ref)
+
+	if err := c.client.Get(endpoint, &result); err != nil {
+		return nil, fmt.Errorf("failed to fetch file content: %w", err)
+	}
+
+	// GitHub returns content with newlines that need to be stripped
+	cleanContent := strings.ReplaceAll(result.Content, "\n", "")
+
+	if result.Encoding == "base64" {
+		decoded, err := base64.StdEncoding.DecodeString(cleanContent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode file content: %w", err)
+		}
+		return decoded, nil
+	}
+
+	return []byte(result.Content), nil
 }

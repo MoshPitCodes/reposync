@@ -31,17 +31,22 @@ func (m Model) renderView() string {
 	// Tabs
 	sections = append(sections, m.renderTabs())
 
-	// Owner bar (for GitHub modes)
-	if m.mode != ModeLocal {
-		sections = append(sections, m.renderOwnerBar())
-	}
+	// Template mode has its own workflow
+	if m.mode == ModeTemplate {
+		sections = append(sections, m.renderTemplateWorkflow())
+	} else {
+		// Owner bar (for GitHub modes)
+		if m.mode != ModeLocal {
+			sections = append(sections, m.renderOwnerBar())
+		}
 
-	// List
-	sections = append(sections, m.renderList())
+		// List
+		sections = append(sections, m.renderList())
 
-	// Progress bar (when syncing)
-	if m.syncing || m.progress.IsComplete() {
-		sections = append(sections, m.renderProgress())
+		// Progress bar (when syncing)
+		if m.syncing || m.progress.IsComplete() {
+			sections = append(sections, m.renderProgress())
+		}
 	}
 
 	// Footer
@@ -64,6 +69,19 @@ func (m Model) renderView() string {
 
 	if m.repoExistsDialog.IsVisible() {
 		view = m.renderWithOverlay(view, m.repoExistsDialog.View())
+	}
+
+	// Template-specific overlays
+	if m.mode == ModeTemplate {
+		// Show template selector as overlay (like settings)
+		if m.templateSelector != nil && m.templateSelector.IsVisible() {
+			view = m.renderWithOverlay(view, m.renderTemplateSelectorOverlay())
+		}
+
+		// Show conflict dialog as overlay
+		if m.templateConflict != nil && m.templateConflict.IsVisible() {
+			view = m.renderWithOverlay(view, m.templateConflict.View())
+		}
 	}
 
 	return view
@@ -184,7 +202,47 @@ func (m Model) renderProgress() string {
 func (m Model) renderFooter() string {
 	var bindings []string
 
-	if m.mode == ModeLocal {
+	if m.mode == ModeTemplate {
+		// Template mode bindings based on current step
+		if m.templateState == nil || m.templateState.Step == StepSelectTemplate {
+			bindings = []string{
+				"s/enter", "select template",
+				"?", "help",
+				"q", "quit",
+			}
+		} else if m.templateState.Step == StepBrowseTree {
+			bindings = []string{
+				"↑/↓", "navigate",
+				"space", "toggle",
+				"a/n", "all/none",
+				"←/→", "collapse/expand",
+				"e/c", "expand/collapse all",
+				"enter", "continue",
+				"esc", "back",
+				"q", "quit",
+			}
+		} else if m.templateState.Step == StepSelectTargets {
+			bindings = []string{
+				"↑/↓", "navigate",
+				"space", "toggle",
+				"a/n", "all/none",
+				"type", "filter",
+				"enter", "sync",
+				"esc", "back",
+				"q", "quit",
+			}
+		} else if m.templateState.Step == StepComplete {
+			bindings = []string{
+				"enter/esc", "continue",
+				"q", "quit",
+			}
+		} else {
+			bindings = []string{
+				"?", "help",
+				"q", "quit",
+			}
+		}
+	} else if m.mode == ModeLocal {
 		bindings = []string{
 			"↑/↓", "navigate",
 			"space", "toggle",
@@ -234,35 +292,69 @@ func (m Model) renderHelpOverlay() string {
 		"1", "Personal repositories",
 		"2", "Organization repositories",
 		"3", "Local repositories",
+		"4", "Templates",
 		"tab", "Next tab",
 		"shift+tab", "Previous tab",
 	}
 
-	// List navigation
-	sections["Navigation"] = []string{
-		"↑/k", "Move up",
-		"↓/j", "Move down",
-		"pgup", "Page up",
-		"pgdown", "Page down",
-	}
+	if m.mode == ModeTemplate {
+		// Template-specific help
+		sections["Template Selection"] = []string{
+			"enter", "Open template selector",
+			"ctrl+t", "Toggle GitHub/Local source",
+			"↑/↓", "Navigate recent templates",
+		}
 
-	// Selection
-	sections["Selection"] = []string{
-		"space", "Toggle selection",
-		"a", "Select all",
-		"n", "Deselect all",
-	}
+		sections["Tree Browser"] = []string{
+			"↑/↓", "Navigate tree",
+			"enter", "Expand/collapse folder",
+			"space", "Toggle selection",
+			"a", "Select all files",
+			"n", "Deselect all",
+			"e", "Expand all folders",
+			"c", "Collapse all folders",
+		}
 
-	// Actions
-	sections["Actions"] = []string{
-		"/", "Search/filter",
-		"s", "Cycle sort mode",
-		"enter", "Start sync",
-	}
+		sections["Target Selection"] = []string{
+			"↑/↓", "Navigate list",
+			"space", "Toggle selection",
+			"a", "Select all targets",
+			"n", "Deselect all",
+		}
 
-	if m.mode != ModeLocal {
-		sections["GitHub"] = []string{
-			"o", "Change owner",
+		sections["Conflict Resolution"] = []string{
+			"o", "Overwrite file",
+			"s", "Skip file",
+			"O", "Overwrite all",
+			"S", "Skip all",
+		}
+	} else {
+		// List navigation
+		sections["Navigation"] = []string{
+			"↑/k", "Move up",
+			"↓/j", "Move down",
+			"pgup", "Page up",
+			"pgdown", "Page down",
+		}
+
+		// Selection
+		sections["Selection"] = []string{
+			"space", "Toggle selection",
+			"a", "Select all",
+			"n", "Deselect all",
+		}
+
+		// Actions
+		sections["Actions"] = []string{
+			"/", "Search/filter",
+			"s", "Cycle sort mode",
+			"enter", "Start sync",
+		}
+
+		if m.mode != ModeLocal {
+			sections["GitHub"] = []string{
+				"o", "Change owner",
+			}
 		}
 	}
 
@@ -296,4 +388,277 @@ func (m Model) renderWithOverlay(base, overlay string) string {
 		lipgloss.WithWhitespaceChars("░"),
 		lipgloss.WithWhitespaceForeground(lipgloss.Color("#2a2a2a")),
 	)
+}
+
+// renderTemplateWorkflow renders the template sync workflow based on current step.
+func (m Model) renderTemplateWorkflow() string {
+	if m.templateState == nil {
+		return m.renderTemplateWelcome()
+	}
+
+	switch m.templateState.Step {
+	case StepSelectTemplate:
+		return m.renderTemplateWelcome()
+	case StepBrowseTree:
+		return m.renderTemplateTree()
+	case StepSelectTargets:
+		return m.renderTemplateTargets()
+	case StepSyncing:
+		return m.renderTemplateSyncProgress()
+	case StepComplete:
+		return m.renderTemplateSyncComplete()
+	default:
+		return m.renderTemplateWelcome()
+	}
+}
+
+// renderTemplateWelcome renders the template mode welcome/prompt screen.
+func (m Model) renderTemplateWelcome() string {
+	var b strings.Builder
+
+	title := lipgloss.NewStyle().
+		Foreground(primaryColor).
+		Bold(true).
+		Render("📋 Template Sync")
+
+	b.WriteString(title)
+	b.WriteString("\n\n")
+
+	desc := lipgloss.NewStyle().
+		Foreground(fgColor).
+		Render("Sync files from a template repository to your local repositories.")
+
+	b.WriteString(desc)
+	b.WriteString("\n\n")
+
+	// Show workflow steps
+	steps := []string{
+		"1. Select a template repository (GitHub or Local)",
+		"2. Browse and select files to sync",
+		"3. Choose target repositories",
+		"4. Sync files to targets",
+	}
+
+	for _, step := range steps {
+		stepStyle := lipgloss.NewStyle().Foreground(mutedColor)
+		b.WriteString(stepStyle.Render("  " + step))
+		b.WriteString("\n")
+	}
+
+	b.WriteString("\n")
+
+	hint := lipgloss.NewStyle().
+		Foreground(accentColor).
+		Bold(true).
+		Render("Press 's' or Enter to select a template...")
+
+	b.WriteString(hint)
+	b.WriteString("\n")
+
+	style := lipgloss.NewStyle().
+		Padding(2, 4).
+		MarginTop(1)
+
+	if m.width > 0 {
+		style = style.Width(m.width)
+	}
+
+	return style.Render(b.String())
+}
+
+// renderTemplateSelectorOverlay renders the template selector as a popup overlay.
+func (m Model) renderTemplateSelectorOverlay() string {
+	if m.templateSelector == nil {
+		return ""
+	}
+
+	// Set reasonable size for the popup
+	selectorWidth := 70
+	if m.width > 0 && m.width < 80 {
+		selectorWidth = m.width - 10
+	}
+
+	selectorHeight := 25
+	if m.height > 0 && m.height < 35 {
+		selectorHeight = m.height - 10
+	}
+
+	m.templateSelector.SetSize(selectorWidth, selectorHeight)
+
+	return m.templateSelector.View()
+}
+
+// renderTemplateTree renders the template tree browser.
+func (m Model) renderTemplateTree() string {
+	if m.templateTree == nil {
+		return lipgloss.NewStyle().
+			Foreground(warningColor).
+			Padding(2, 4).
+			Render("Loading template tree...")
+	}
+
+	// Update tree size based on available space
+	// Main UI chrome in template mode:
+	// - Tabs: 3 lines (content + border + margin)
+	// - Footer: 6 lines (content + padding + border + margin)
+	// Total: 9 lines
+	mainChrome := 9
+	treeHeight := m.height - mainChrome
+	if treeHeight < 10 {
+		treeHeight = 10
+	}
+
+	// Safely set size (avoid negative values)
+	treeWidth := m.width - 8
+	if treeWidth < 40 {
+		treeWidth = 40
+	}
+	m.templateTree.SetSize(treeWidth, treeHeight)
+
+	return m.templateTree.View()
+}
+
+// renderTemplateTargets renders the target repository selector.
+func (m Model) renderTemplateTargets() string {
+	if m.templateTargets == nil {
+		return lipgloss.NewStyle().
+			Foreground(warningColor).
+			Padding(2, 4).
+			Render("Loading target repositories...")
+	}
+
+	// Update targets size based on available space
+	targetsHeight := m.height - 12
+	if targetsHeight < 10 {
+		targetsHeight = 10
+	}
+
+	// Safely set size (avoid negative values)
+	targetsWidth := m.width - 8
+	if targetsWidth < 40 {
+		targetsWidth = 40
+	}
+	m.templateTargets.SetSize(targetsWidth, targetsHeight)
+
+	return m.templateTargets.View()
+}
+
+// renderTemplateSyncProgress renders the template sync progress.
+func (m Model) renderTemplateSyncProgress() string {
+	var b strings.Builder
+
+	title := lipgloss.NewStyle().
+		Foreground(primaryColor).
+		Bold(true).
+		Render("📋 Syncing Template Files")
+
+	b.WriteString(title)
+	b.WriteString("\n\n")
+
+	if m.templateState != nil {
+		// Progress bar
+		progress := float64(m.templateState.SyncProgress.Current) / float64(m.templateState.SyncProgress.Total)
+		if m.templateState.SyncProgress.Total == 0 {
+			progress = 0
+		}
+
+		barWidth := 40
+		filled := int(progress * float64(barWidth))
+		empty := barWidth - filled
+
+		bar := lipgloss.NewStyle().Foreground(successColor).Render(strings.Repeat("█", filled))
+		bar += lipgloss.NewStyle().Foreground(mutedColor).Render(strings.Repeat("░", empty))
+
+		percentage := fmt.Sprintf(" %.0f%%", progress*100)
+		b.WriteString(bar)
+		b.WriteString(lipgloss.NewStyle().Foreground(accentColor).Render(percentage))
+		b.WriteString("\n\n")
+
+		// Current file info
+		if m.templateState.SyncProgress.CurrentFile != "" {
+			fileInfo := fmt.Sprintf("Syncing: %s", m.templateState.SyncProgress.CurrentFile)
+			b.WriteString(lipgloss.NewStyle().Foreground(fgColor).Render(fileInfo))
+			b.WriteString("\n")
+		}
+
+		if m.templateState.SyncProgress.TargetRepo != "" {
+			targetInfo := fmt.Sprintf("Target: %s", m.templateState.SyncProgress.TargetRepo)
+			b.WriteString(lipgloss.NewStyle().Foreground(secondaryColor).Render(targetInfo))
+			b.WriteString("\n")
+		}
+
+		// Progress stats
+		stats := fmt.Sprintf("\n%d/%d files processed",
+			m.templateState.SyncProgress.Current,
+			m.templateState.SyncProgress.Total)
+		b.WriteString(lipgloss.NewStyle().Foreground(mutedColor).Render(stats))
+	}
+
+	style := lipgloss.NewStyle().
+		Padding(2, 4).
+		MarginTop(1)
+
+	if m.width > 0 {
+		style = style.Width(m.width)
+	}
+
+	return style.Render(b.String())
+}
+
+// renderTemplateSyncComplete renders the sync completion summary.
+func (m Model) renderTemplateSyncComplete() string {
+	var b strings.Builder
+
+	title := lipgloss.NewStyle().
+		Foreground(successColor).
+		Bold(true).
+		Render("✓ Template Sync Complete")
+
+	b.WriteString(title)
+	b.WriteString("\n\n")
+
+	if m.templateState != nil {
+		// Use the deprecated fields which are actually populated
+		synced := m.templateState.SyncedCount
+		skipped := m.templateState.SkippedCount
+		errors := m.templateState.ErrorCount
+
+		// Summary stats
+		if synced > 0 {
+			syncedStr := fmt.Sprintf("✓ %d files synced", synced)
+			b.WriteString(lipgloss.NewStyle().Foreground(successColor).Render(syncedStr))
+			b.WriteString("\n")
+		}
+
+		if skipped > 0 {
+			skippedStr := fmt.Sprintf("○ %d files skipped", skipped)
+			b.WriteString(lipgloss.NewStyle().Foreground(warningColor).Render(skippedStr))
+			b.WriteString("\n")
+		}
+
+		if errors > 0 {
+			errorsStr := fmt.Sprintf("✗ %d errors", errors)
+			b.WriteString(lipgloss.NewStyle().Foreground(errorColor).Render(errorsStr))
+			b.WriteString("\n")
+		}
+
+		b.WriteString("\n")
+	}
+
+	hint := lipgloss.NewStyle().
+		Foreground(mutedColor).
+		Italic(true).
+		Render("Press Enter or Esc to continue...")
+
+	b.WriteString(hint)
+
+	style := lipgloss.NewStyle().
+		Padding(2, 4).
+		MarginTop(1)
+
+	if m.width > 0 {
+		style = style.Width(m.width)
+	}
+
+	return style.Render(b.String())
 }

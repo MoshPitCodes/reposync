@@ -41,6 +41,9 @@ func TestTabBarRendering(t *testing.T) {
 	if !strings.Contains(view, "Local") {
 		t.Error("Tab bar should contain 'Local' tab")
 	}
+	if !strings.Contains(view, "Templates") {
+		t.Error("Tab bar should contain 'Templates' tab")
+	}
 }
 
 // TestTabBarRenderingWithWidth tests that tab bar renders correctly with width.
@@ -69,6 +72,9 @@ func TestTabBarRenderingWithWidth(t *testing.T) {
 	}
 	if !strings.Contains(view, "Local") {
 		t.Error("Tab bar should contain 'Local' tab")
+	}
+	if !strings.Contains(view, "Templates") {
+		t.Error("Tab bar should contain 'Templates' tab")
 	}
 }
 
@@ -139,16 +145,28 @@ func TestTabBarNavigation(t *testing.T) {
 		t.Error("Next from Organizations should go to Local")
 	}
 
+	// Next should go to Templates (3)
+	nextMode = tabBar.Next()
+	if nextMode != ModeTemplate {
+		t.Error("Next from Local should go to Templates")
+	}
+
 	// Next should wrap to Personal (0)
 	nextMode = tabBar.Next()
 	if nextMode != ModePersonal {
-		t.Error("Next from Local should wrap to Personal")
+		t.Error("Next from Templates should wrap to Personal")
+	}
+
+	// Prev should go to Templates (3)
+	prevMode := tabBar.Prev()
+	if prevMode != ModeTemplate {
+		t.Error("Prev from Personal should wrap to Templates")
 	}
 
 	// Prev should go to Local (2)
-	prevMode := tabBar.Prev()
+	prevMode = tabBar.Prev()
 	if prevMode != ModeLocal {
-		t.Error("Prev from Personal should wrap to Local")
+		t.Error("Prev from Templates should go to Local")
 	}
 
 	// Prev should go to Organizations (1)
@@ -188,6 +206,9 @@ func TestTabBarConsistentRendering(t *testing.T) {
 		if !strings.Contains(view, "Local") {
 			t.Errorf("Render %d should contain 'Local' tab", i+1)
 		}
+		if !strings.Contains(view, "Templates") {
+			t.Errorf("Render %d should contain 'Templates' tab", i+1)
+		}
 	}
 }
 
@@ -212,6 +233,9 @@ func TestTabBarDifferentWidths(t *testing.T) {
 		}
 		if !strings.Contains(view, "Local") {
 			t.Errorf("Tab bar at width %d should contain 'Local' tab", width)
+		}
+		if !strings.Contains(view, "Templates") {
+			t.Errorf("Tab bar at width %d should contain 'Templates' tab", width)
 		}
 	}
 }
@@ -244,6 +268,9 @@ func TestTabBarFirstTabAtVariousWidths(t *testing.T) {
 		}
 		if !strings.Contains(containerView, "Local") {
 			t.Errorf("Local tab missing at width %d", width)
+		}
+		if !strings.Contains(containerView, "Templates") {
+			t.Errorf("Templates tab missing at width %d", width)
 		}
 	}
 }

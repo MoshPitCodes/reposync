@@ -120,3 +120,80 @@ type RepoExistsResponseMsg struct {
 	Action    ExistsAction
 	RepoIndex int
 }
+
+// Template workflow messages
+
+// TemplateRepoSelectedMsg is sent when a template repository is selected.
+type TemplateRepoSelectedMsg struct {
+	Owner     string // For GitHub templates
+	Repo      string // For GitHub templates
+	LocalPath string // For local templates (mutually exclusive with Owner/Repo)
+	IsLocal   bool   // True if this is a local template
+}
+
+// TemplateTreeNode represents a file or folder in the template repository tree.
+type TemplateTreeNode struct {
+	Path     string
+	Name     string
+	IsDir    bool
+	SHA      string
+	Size     int64
+	Children []*TemplateTreeNode
+	Expanded bool
+	Selected bool
+}
+
+// TemplateTreeLoadedMsg is sent when the repository tree is fetched.
+type TemplateTreeLoadedMsg struct {
+	Root *TemplateTreeNode
+	Err  error
+}
+
+// TemplateTargetsSelectedMsg is sent when target local repos are chosen.
+type TemplateTargetsSelectedMsg struct {
+	TargetPaths []string
+}
+
+// TemplateConflictMsg is sent when a file conflict is detected during sync.
+type TemplateConflictMsg struct {
+	FilePath       string
+	TargetRepoPath string
+	TemplateSize   int64
+	LocalSize      int64
+}
+
+// TemplateConflictAction represents the user's choice for handling a conflict.
+type TemplateConflictAction int
+
+const (
+	ConflictOverwrite TemplateConflictAction = iota
+	ConflictSkip
+	ConflictOverwriteAll
+	ConflictSkipAll
+)
+
+// TemplateConflictResponseMsg is sent in response to a conflict prompt.
+type TemplateConflictResponseMsg struct {
+	Action   TemplateConflictAction
+	FilePath string
+}
+
+// TemplateSyncProgressMsg reports sync progress.
+type TemplateSyncProgressMsg struct {
+	Current     int
+	Total       int
+	CurrentFile string
+	TargetRepo  string
+}
+
+// TemplateSyncCompleteMsg is sent when template sync finishes.
+type TemplateSyncCompleteMsg struct {
+	Synced  int
+	Skipped int
+	Errors  int
+}
+
+// TemplateStepChangeMsg is sent when the template workflow step changes.
+type TemplateStepChangeMsg struct {
+	Step int
+}

@@ -29,6 +29,7 @@ const (
 	ModePersonal ViewMode = iota
 	ModeOrganization
 	ModeLocal
+	ModeTemplate
 )
 
 // String returns the string representation of the view mode.
@@ -40,6 +41,8 @@ func (v ViewMode) String() string {
 		return "Organizations"
 	case ModeLocal:
 		return "Local"
+	case ModeTemplate:
+		return "Templates"
 	default:
 		return "Unknown"
 	}
@@ -80,6 +83,12 @@ func NewTabBarModel() *TabBarModel {
 				Label:    "Local",
 				Shortcut: "3",
 				Icon:     "📁",
+			},
+			{
+				ID:       ModeTemplate,
+				Label:    "Templates",
+				Shortcut: "4",
+				Icon:     "📋",
 			},
 		},
 		active: ModePersonal,
@@ -127,6 +136,11 @@ func (m *TabBarModel) Update(msg tea.Msg) (*TabBarModel, tea.Cmd) {
 			m.active = ModeLocal
 			return m, func() tea.Msg {
 				return SwitchModeMsg{Mode: ModeLocal}
+			}
+		case "4":
+			m.active = ModeTemplate
+			return m, func() tea.Msg {
+				return SwitchModeMsg{Mode: ModeTemplate}
 			}
 		case "tab":
 			newMode := m.Next()
