@@ -45,8 +45,13 @@ type Model struct {
 	username string
 
 	// Ints (8 bytes each)
-	width  int
-	height int
+	width          int
+	height         int
+	headerHeight   int
+	tabsHeight     int
+	ownerBarHeight int
+	footerHeight   int
+	listHeight     int
 
 	// Enum (platform-dependent, typically 4-8 bytes)
 	mode ViewMode
@@ -89,9 +94,8 @@ func NewModel(cfg *config.Config) (Model, error) {
 		owner = mergedCfg.GitHubOwner
 	}
 
-	// Create list model and set compact mode from persisted config
+	// Create list model
 	list := NewListModel()
-	list.SetCompactMode(persistedCfg.CompactMode)
 
 	return Model{
 		config:           mergedCfg,
@@ -202,6 +206,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		m.width = msg.Width
 		m.height = msg.Height
+		m.calculateLayoutHeights()
 		m.settings.SetSize(msg.Width, msg.Height)
 		return m, nil
 	}
@@ -370,8 +375,6 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				persistedCfg = &config.PersistedConfig{}
 			}
 			m.config = m.config.MergeWithPersisted(persistedCfg)
-			// Update list compact mode from saved config
-			m.list.SetCompactMode(persistedCfg.CompactMode)
 		}
 		return m, nil
 	}
@@ -426,10 +429,43 @@ func (m Model) startSync() (tea.Model, tea.Cmd) {
 	return m, m.progress.Start(selectedItems, targetDir, mode)
 }
 
+// calculateLayoutHeights calculates the fixed heights of each layout component.
+func (m *Model) calculateLayoutHeights() {
+	// Recalculate on each call to handle dynamic elements
+
+	// Header removed - no longer displayed
+	m.headerHeight = 0
+
+	// Tabs: 1 line content + 1 border bottom + 1 margin bottom = 3 lines
+	m.tabsHeight = 3
+
+	// Owner bar (only in GitHub modes): 1 line content + 1 border bottom + 1 margin bottom = 3 lines
+	m.ownerBarHeight = 0
+	if m.mode != ModeLocal {
+		m.ownerBarHeight = 3
+	}
+
+	// Footer: 2 lines content + 2 padding (top/bottom) + 1 border top + 1 margin top = 6 lines
+	m.footerHeight = 6
+
+	// Progress bar (when visible): variable, estimate 8 lines
+	progressHeight := 0
+	if m.syncing || m.progress.IsComplete() {
+		progressHeight = 8
+	}
+
+	// List gets remaining height with safety margin
+	fixedHeight := m.headerHeight + m.tabsHeight + m.ownerBarHeight + m.footerHeight + progressHeight
+	m.listHeight = m.height - fixedHeight - 2 // Extra 2 lines for safety
+	if m.listHeight < 5 {
+		m.listHeight = 5 // Minimum height for list
+	}
+}
+
 // View renders the complete unified view - delegated to view.go.
 func (m Model) View() string {
 	if m.quitting {
-		return RenderSuccess("Thanks for using repo-sync!\n")
+		return RenderSuccess("Thanks for using reposync!\n")
 	}
 
 	// This will be implemented in view.go

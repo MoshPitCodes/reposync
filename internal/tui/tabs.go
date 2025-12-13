@@ -159,6 +159,15 @@ func (m *TabBarModel) View() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
 }
 
+// ViewWithWidth renders the tab bar with a specified width.
+// Note: Width parameter is kept for API compatibility but not used for padding
+// to avoid lipgloss truncation issues with the first tab.
+func (m *TabBarModel) ViewWithWidth(width int) string {
+	// Just render tabs without width padding - this prevents the first tab
+	// from being truncated by lipgloss at certain dimensions
+	return m.View()
+}
+
 // renderTab renders a single tab.
 func (m *TabBarModel) renderTab(tab Tab, active bool) string {
 	var style lipgloss.Style
@@ -179,7 +188,7 @@ func (m *TabBarModel) renderTab(tab Tab, active bool) string {
 	return style.Render(label)
 }
 
-// Styles for tabs
+// Styles for tabs - clean and simple
 var (
 	activeTabStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFFFF")).
@@ -203,6 +212,13 @@ var (
 
 // ViewWithContainer renders the tab bar with a container border.
 func (m *TabBarModel) ViewWithContainer() string {
+	return tabBarContainerStyle.Render(m.View())
+}
+
+// ViewWithContainerAndWidth renders the tab bar with a container border and specified width.
+func (m *TabBarModel) ViewWithContainerAndWidth(width int) string {
+	// Simply render the tabs with container - no width manipulation
+	// Width manipulation causes lipgloss to truncate the first tab at certain dimensions
 	return tabBarContainerStyle.Render(m.View())
 }
 

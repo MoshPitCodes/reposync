@@ -267,12 +267,10 @@ func (m *OwnerSelectorModel) ViewInline() string {
 	return ownerInlineStyle.Render(label)
 }
 
-// Styles for owner selector
+// Styles for owner selector - clean and simple
 var (
 	ownerBarStyle = lipgloss.NewStyle().
-			Foreground(fgColor).
-			Background(bgColor).
-			Padding(0, 2).
+			Padding(0, 1).
 			MarginBottom(1).
 			BorderStyle(lipgloss.NormalBorder()).
 			BorderBottom(true).
@@ -284,14 +282,15 @@ var (
 				Padding(0, 1)
 
 	ownerDropdownStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
+				Border(lipgloss.DoubleBorder()).
 				BorderForeground(secondaryColor).
-				Padding(1, 2).
+				Padding(2, 3).
 				Background(bgColor).
 				Foreground(fgColor)
 
 	ownerDropdownHeaderStyle = lipgloss.NewStyle().
-					Foreground(primaryColor).
+					Foreground(secondaryColor).
 					Bold(true).
-					Underline(true)
+					Underline(true).
+					MarginBottom(1)
 )

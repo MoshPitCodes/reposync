@@ -47,9 +47,6 @@ type SettingsModel struct {
 	selected int
 	width    int
 	height   int
-
-	// Bool (1 byte)
-	compactMode bool
 }
 
 // NewSettingsModel creates a new settings model.
@@ -100,13 +97,12 @@ func NewSettingsModel(store *config.ConfigStore) *SettingsModel {
 	}
 
 	return &SettingsModel{
-		store:       store,
-		fields:      fields,
-		inputs:      inputs,
-		selected:    0,
-		compactMode: persistedCfg.CompactMode,
-		width:       80,
-		height:      30,
+		store:    store,
+		fields:   fields,
+		inputs:   inputs,
+		selected: 0,
+		width:    80,
+		height:   30,
 	}
 }
 
@@ -146,11 +142,6 @@ func (m *SettingsModel) Update(msg tea.Msg) (*SettingsModel, tea.Cmd) {
 				m.inputs[m.selected].Focus()
 			}
 			return m, nil
-
-		case "ctrl+c":
-			// Toggle compact mode
-			m.compactMode = !m.compactMode
-			return m, nil
 		}
 	}
 
@@ -163,9 +154,7 @@ func (m *SettingsModel) Update(msg tea.Msg) (*SettingsModel, tea.Cmd) {
 
 // Save saves the current settings to the config store.
 func (m *SettingsModel) Save() error {
-	persistedCfg := &config.PersistedConfig{
-		CompactMode: m.compactMode,
-	}
+	persistedCfg := &config.PersistedConfig{}
 
 	for i, field := range m.fields {
 		value := m.inputs[i].Value()
@@ -193,7 +182,7 @@ func (m *SettingsModel) View() string {
 	b.WriteString("\n\n")
 
 	// Instructions
-	b.WriteString(helpDescStyle.Render("Configure default settings for repo-sync"))
+	b.WriteString(helpDescStyle.Render("Configure default settings for reposync"))
 	b.WriteString("\n\n")
 
 	// Fields
@@ -224,18 +213,6 @@ func (m *SettingsModel) View() string {
 		b.WriteString("\n\n")
 	}
 
-	// Compact mode toggle
-	compactLabel := "Compact Mode: "
-	compactValue := "Off"
-	if m.compactMode {
-		compactValue = "On"
-	}
-	b.WriteString(lipgloss.NewStyle().Foreground(primaryColor).Bold(true).Render(compactLabel))
-	b.WriteString(lipgloss.NewStyle().Foreground(accentColor).Render(compactValue))
-	b.WriteString("\n")
-	b.WriteString(helpDescStyle.Render("  Press Ctrl+C to toggle compact display mode"))
-	b.WriteString("\n\n")
-
 	// Config file location
 	b.WriteString(RenderMetadata(fmt.Sprintf("Config file: %s", m.store.Path())))
 	b.WriteString("\n\n")
@@ -245,7 +222,6 @@ func (m *SettingsModel) View() string {
 		"↑/↓", "navigate",
 		"enter", "save",
 		"esc", "cancel",
-		"ctrl+c", "toggle compact",
 	)
 	b.WriteString(footer)
 
@@ -258,12 +234,12 @@ func (m *SettingsModel) SetSize(width, height int) {
 	m.height = height
 }
 
-// Styles for settings overlay
+// Styles for settings overlay - Enhanced with better visibility
 var (
 	settingsOverlayStyle = lipgloss.NewStyle().
 				Border(lipgloss.DoubleBorder()).
 				BorderForeground(primaryColor).
-				Padding(2, 3).
+				Padding(2, 4).
 				Background(bgColor).
 				Foreground(fgColor)
 
@@ -271,5 +247,5 @@ var (
 					Foreground(primaryColor).
 					Bold(true).
 					Underline(true).
-					MarginBottom(1)
+					MarginBottom(2)
 )

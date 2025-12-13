@@ -71,7 +71,7 @@ func (i GitHubRepoItem) Metadata() map[string]string {
 		meta["visibility"] = "🌐 Public"
 	}
 	if i.repo.IsArchived {
-		meta["archived"] = "📦 Archived"
+		meta["archived"] = "Archived"
 	}
 	meta["clone_url"] = i.repo.CloneURL
 
@@ -164,16 +164,16 @@ type ListModel struct {
 	checked map[string]bool
 
 	// Ints (8 bytes each)
-	selected int
-	pageSize int
+	selected       int
+	pageSize       int
+	viewportOffset int
 
 	// Enum (platform-dependent)
 	sortMode SortMode
 
 	// Bools (1 byte each)
-	searching   bool
-	compactMode bool
-	loading     bool
+	searching bool
+	loading   bool
 }
 
 // NewListModel creates a new list model.
@@ -183,22 +183,17 @@ func NewListModel() *ListModel {
 	ti.CharLimit = 50
 
 	return &ListModel{
-		items:       []ListItem{},
-		filtered:    []ListItem{},
-		selected:    0,
-		checked:     make(map[string]bool),
-		searchInput: ti,
-		searching:   false,
-		sortMode:    SortByName,
-		compactMode: false,
-		pageSize:    12,
-		loading:     false,
+		items:          []ListItem{},
+		filtered:       []ListItem{},
+		selected:       0,
+		checked:        make(map[string]bool),
+		searchInput:    ti,
+		searching:      false,
+		sortMode:       SortByName,
+		pageSize:       12,
+		loading:        false,
+		viewportOffset: 0,
 	}
-}
-
-// SetCompactMode sets the compact mode for the list.
-func (m *ListModel) SetCompactMode(compact bool) {
-	m.compactMode = compact
 }
 
 // SetItems sets the items for the list.
@@ -280,6 +275,8 @@ func (m *ListModel) handleSearchInput(msg tea.KeyMsg) (*ListModel, tea.Cmd) {
 
 // handleNavigation processes navigation and selection keys.
 func (m *ListModel) handleNavigation(msg tea.KeyMsg) (*ListModel, tea.Cmd) {
+	oldSelected := m.selected
+
 	switch msg.String() {
 	case "up", "k":
 		if m.selected > 0 {
@@ -331,7 +328,12 @@ func (m *ListModel) handleNavigation(msg tea.KeyMsg) (*ListModel, tea.Cmd) {
 		m.sortItems()
 		m.filterItems()
 		m.selected = 0
+		m.viewportOffset = 0
 	}
+
+	// Viewport will be updated in View() based on selection
+	// No need to update it here since we don't know display count yet
+	_ = oldSelected
 
 	return m, nil
 }
@@ -402,55 +404,68 @@ func (m *ListModel) filterItems() {
 	}
 }
 
-// View renders the list.
+// View renders the list with a fixed height and viewport scrolling.
 func (m *ListModel) View(width, height int) string {
-	var b strings.Builder
+	var lines []string
 
 	if m.loading {
-		b.WriteString(RenderInfo("Loading..."))
-		return b.String()
+		lines = append(lines, RenderInfo("Loading..."))
+		return m.renderWithFixedHeight(lines, height)
 	}
 
 	if m.err != nil {
-		b.WriteString(RenderError(fmt.Sprintf("Error: %v", m.err)))
-		return b.String()
+		lines = append(lines, RenderError(fmt.Sprintf("Error: %v", m.err)))
+		return m.renderWithFixedHeight(lines, height)
 	}
 
 	if len(m.items) == 0 {
-		b.WriteString(RenderWarning("No items found"))
-		return b.String()
+		lines = append(lines, RenderWarning("No items found"))
+		return m.renderWithFixedHeight(lines, height)
 	}
 
 	// Search input
+	searchHeight := 0
 	if m.searching {
-		b.WriteString(RenderSearchPrompt(m.searchInput.View()))
-		b.WriteString("\n\n")
+		lines = append(lines, RenderSearchPrompt(m.searchInput.View()))
+		lines = append(lines, "")
+		searchHeight = 2
 	}
 
-	// Calculate viewport
-	displayCount := m.pageSize
-	if height > 20 {
-		displayCount = height - 15
+	// Calculate available height for items (reserve 2 lines for nav hint)
+	availableHeight := height - searchHeight - 2
+	if availableHeight < 3 {
+		availableHeight = 3
 	}
 
-	start := m.selected - displayCount/2
-	if start < 0 {
-		start = 0
+	// Calculate lines per item (1 for item, 1 for description if exists, 1 for metadata for selected item)
+	// Account for potential description + metadata lines for selected item
+	linesPerItem := 3
+
+	// Calculate how many items can fit
+	displayCount := availableHeight / linesPerItem
+	if displayCount < 1 {
+		displayCount = 1
 	}
+
+	// Update viewport offset to keep selected item visible
+	m.updateViewportForDisplay(displayCount)
+
+	// Calculate viewport window
+	start := m.viewportOffset
 	end := start + displayCount
 	if end > len(m.filtered) {
 		end = len(m.filtered)
-		start = end - displayCount
-		if start < 0 {
-			start = 0
-		}
 	}
 
 	// Count active vs archived repos for section header
 	activeCount := 0
 	archivedCount := 0
-	for _, item := range m.filtered {
+	firstArchivedIndex := -1
+	for i, item := range m.filtered {
 		if item.IsArchived() {
+			if firstArchivedIndex == -1 {
+				firstArchivedIndex = i
+			}
 			archivedCount++
 		} else {
 			activeCount++
@@ -467,32 +482,37 @@ func (m *ListModel) View(width, height int) string {
 
 		// Render archived section header when we reach first archived item in viewport
 		if isArchived && !archivedHeaderRendered && archivedCount > 0 && activeCount > 0 {
-			b.WriteString("\n")
-			b.WriteString(RenderSectionHeader(fmt.Sprintf("Archived (%d)", archivedCount)))
-			b.WriteString("\n\n")
-			archivedHeaderRendered = true
+			// Only show header if this is the first archived item OR if we're at viewport start
+			if i == firstArchivedIndex || (i == start && i > 0) {
+				lines = append(lines, "")
+				lines = append(lines, RenderSectionHeader(fmt.Sprintf("Archived (%d)", archivedCount)))
+				lines = append(lines, "")
+				archivedHeaderRendered = true
+			}
 		}
 
-		// Main line
+		// Main line - just the title, no description
 		title := item.Title()
-		if item.Description() != "" {
-			maxDescLen := 60
-			if width > 120 {
-				maxDescLen = 80
-			}
-			title += " - " + truncate(item.Description(), maxDescLen)
-		}
 
 		// Use appropriate renderer based on archived status
 		if isArchived {
-			b.WriteString(RenderArchivedListItem(title, isSelected, isChecked))
+			lines = append(lines, RenderArchivedListItem(title, isSelected, isChecked))
 		} else {
-			b.WriteString(RenderListItem(title, isSelected, isChecked))
+			lines = append(lines, RenderListItem(title, isSelected, isChecked))
 		}
-		b.WriteString("\n")
+
+		// Description line for selected item (only if it exists)
+		if isSelected && item.Description() != "" {
+			maxDescLen := 80
+			if width < 120 {
+				maxDescLen = 60
+			}
+			descLine := "    " + truncate(item.Description(), maxDescLen)
+			lines = append(lines, RenderMetadata(descLine))
+		}
 
 		// Metadata line for selected item
-		if isSelected && !m.compactMode {
+		if isSelected {
 			meta := item.Metadata()
 			if len(meta) > 0 {
 				var metaParts []string
@@ -524,21 +544,59 @@ func (m *ListModel) View(width, height int) string {
 
 				if len(metaParts) > 0 {
 					metadataLine := "    " + strings.Join(metaParts, " • ")
-					b.WriteString(RenderMetadata(metadataLine))
-					b.WriteString("\n")
+					lines = append(lines, RenderMetadata(metadataLine))
 				}
 			}
 		}
 	}
 
 	// Show navigation hint if there are more items
-	if len(m.filtered) > displayCount {
-		b.WriteString("\n")
+	if len(m.filtered) > 0 {
+		lines = append(lines, "")
 		navHint := fmt.Sprintf("Showing %d-%d of %d", start+1, end, len(m.filtered))
-		b.WriteString(RenderMetadata(navHint))
+		if m.selected >= 0 && m.selected < len(m.filtered) {
+			navHint += fmt.Sprintf(" (selected: %d)", m.selected+1)
+		}
+		lines = append(lines, RenderMetadata(navHint))
 	}
 
-	return b.String()
+	return m.renderWithFixedHeight(lines, height)
+}
+
+// updateViewportForDisplay updates the viewport offset to keep selected item visible.
+func (m *ListModel) updateViewportForDisplay(displayCount int) {
+	if m.selected < m.viewportOffset {
+		// Selected item is above viewport, scroll up
+		m.viewportOffset = m.selected
+	} else if m.selected >= m.viewportOffset+displayCount {
+		// Selected item is below viewport, scroll down
+		m.viewportOffset = m.selected - displayCount + 1
+	}
+
+	// Ensure viewport doesn't go past the end
+	maxOffset := len(m.filtered) - displayCount
+	if maxOffset < 0 {
+		maxOffset = 0
+	}
+	if m.viewportOffset > maxOffset {
+		m.viewportOffset = maxOffset
+	}
+
+	// Ensure viewport doesn't go negative
+	if m.viewportOffset < 0 {
+		m.viewportOffset = 0
+	}
+}
+
+// renderWithFixedHeight renders content, truncating if needed but NOT padding.
+// Padding was causing total view height to exceed terminal bounds.
+func (m *ListModel) renderWithFixedHeight(lines []string, height int) string {
+	// If content is taller than height, truncate
+	if len(lines) > height && height > 0 {
+		lines = lines[:height]
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // Helper functions
