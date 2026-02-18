@@ -111,3 +111,5 @@ talos/*.yaml
 
 # Kubernetes
 *.kubeconfig
+.todos/
+.opencode/
