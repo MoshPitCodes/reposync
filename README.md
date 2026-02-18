@@ -16,7 +16,7 @@
             <img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=Apache-2.0&colorA=1E1E2E&colorB=10B981&logo=apache&logoColor=10B981&"/>
          </a>
          <a href="https://go.dev/">
-            <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1E1E2E"/>
+            <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1E1E2E"/>
          </a>
       </div>
       <br>
@@ -28,25 +28,22 @@
 
 # 🗃️ Overview
 
-`reposync` is a modern Go CLI application that simplifies repository management by providing an elegant, interactive terminal user interface for synchronizing repositories. Whether you need to clone GitHub repositories or copy local repositories to a unified location, reposync makes it effortless with its intuitive TUI.
+`reposync` is a Go CLI/TUI for synchronizing repositories into a target workspace. It can clone from GitHub, copy local repositories, and sync selected template files across multiple local repositories.
 
-Built with Bubble Tea and following The Elm Architecture, reposync offers both interactive and batch modes for maximum flexibility. The interactive mode provides a rich terminal experience with tabs, search, sorting, and real-time progress tracking, while batch mode enables seamless automation in scripts and CI/CD pipelines.
+Built with Bubble Tea, it supports both interactive workflows (tabbed TUI) and batch workflows (CLI flags) for automation.
 
 ### Key Features
 
-- **Interactive TUI** - Beautiful terminal UI with multi-select, search, filtering, and sorting
-- **GitHub Integration** - Seamless integration with GitHub via the `gh` CLI
-  - Browse personal and organization repositories
-  - Switch between multiple GitHub owners/orgs with owner selector
-  - Automatic authentication using GitHub CLI
-- **Local Repository Discovery** - Automatically scans configured directories for Git repositories
-- **Batch Mode** - Non-interactive mode for automation and scripting
+- **Interactive TUI** - 4-tab interface: Personal, Organizations, Local, Templates
+- **GitHub Integration** - Uses `gh` for authentication and repository operations
+- **Local Repository Discovery** - Scans configured source directories for Git repositories
+- **Template Sync Workflow** - Select template source/files and sync to many local repos
+- **Batch Mode** - Non-interactive mode for GitHub clone and local copy operations
 - **Persistent Configuration** - Settings stored in `~/.config/reposync/config.json`
-- **Smart Conflict Handling** - Interactive dialog when repositories already exist
-- **Tabbed Navigation** - Quick switching between Personal, Organizations, and Local modes
-- **Progress Tracking** - Real-time inline progress with detailed sync results
+- **Conflict Handling** - Repository/file conflict detection with safe defaults
+- **Progress Tracking** - Inline progress for sync operations
 - **Keyboard-Driven** - Comprehensive keyboard shortcuts for all actions
-- **Idiomatic Go** - Built following Go 1.24+ best practices and patterns
+- **Idiomatic Go** - Built with Go 1.25+
 
 <br/>
 
@@ -59,6 +56,8 @@ Built with Bubble Tea and following The Elm Architecture, reposync offers both i
 [`internal/github/`](internal/github/) - GitHub API client implementation using [go-gh](https://github.com/cli/go-gh)
 
 [`internal/local/`](internal/local/) - Local filesystem scanner for discovering Git repositories
+
+[`internal/template/`](internal/template/) - Template file synchronization engine
 
 [`internal/tui/`](internal/tui/) - Bubble Tea TUI components including models, views, tabs, lists, progress bars, settings, owner selector, and dialogs
 
@@ -75,7 +74,8 @@ Built with Bubble Tea and following The Elm Architecture, reposync offers both i
 | **GitHub Integration**         | API client using go-gh, repository listing, organization management, authentication via GitHub CLI      |
 | **Local Scanner**              | Filesystem scanning for Git repositories, directory traversal, repository metadata extraction           |
 | **TUI Framework**              | Bubble Tea model/view architecture, tab navigation, repository list view, multi-select functionality    |
-| **TUI Components**             | Progress tracking, settings overlay, owner selector, conflict resolution dialog, keyboard shortcuts     |
+| **TUI Components**             | Progress tracking, settings/help overlays, owner selector, conflict dialogs, keyboard shortcuts          |
+| **Template Sync Engine**       | Sync selected files from GitHub/local template sources to multiple local repositories                   |
 | **Synchronization Engine**     | Git clone operations, local repository copying, conflict detection, progress reporting                  |
 
 <br/>
@@ -164,10 +164,12 @@ reposync/
 │   │   └── client.go     # GitHub API client (via go-gh)
 │   ├── local/
 │   │   └── scanner.go    # Local filesystem scanner for Git repositories
+│   ├── template/
+│   │   └── sync.go       # Template sync engine and conflict handling
 │   └── tui/
 │       ├── model.go      # Main Bubble Tea model (state management)
 │       ├── view.go       # View rendering logic
-│       ├── tabs.go       # Tab bar (Personal/Organizations/Local)
+│       ├── tabs.go       # Tab bar (Personal/Organizations/Local/Templates)
 │       ├── list.go       # Repository list view with selection
 │       ├── progress.go   # Inline progress tracking during sync
 │       ├── settings.go   # Settings overlay (config editor)
@@ -186,10 +188,10 @@ reposync/
 # 🚀 **Installation**
 
 > [!CAUTION]
-> This tool will clone or copy Git repositories to your specified target directory. Ensure you review the configuration and understand the sync operations before executing them. While reposync includes conflict detection, you should backup important data before bulk synchronization operations.
+> `reposync` can clone/copy many repositories into your target directory. Review configuration first and back up important data before large sync operations.
 
 > [!WARNING]
-> You **must** have the GitHub CLI (`gh`) installed and authenticated to use GitHub synchronization features. Run `gh auth login` before using `reposync github` commands.
+> Install and authenticate GitHub CLI (`gh auth login`) before using GitHub-based workflows.
 
 <br/>
 
@@ -197,14 +199,14 @@ reposync/
 
 Before installing reposync, ensure you have the following dependencies:
 
-- **Go 1.24 or later** - [Download](https://go.dev/dl/)
+- **Go 1.25 or later** - [Download](https://go.dev/dl/)
 - **Git** - Version control system
-- **GitHub CLI (`gh`)** - For GitHub synchronization (run `gh auth login` after installation)
-- Authenticated GitHub account (for GitHub mode)
+- **GitHub CLI (`gh`)** - Required for TUI startup and GitHub-based operations (`gh auth login`)
+- Authenticated GitHub account (for Personal/Organizations/Template-from-GitHub flows)
 
 > [!NOTE]
 > This tool has been tested with the following parameters:
-> - Go 1.24+ on Linux, macOS, and Windows
+> - Go 1.25+ on Linux, macOS, and Windows
 > - GitHub CLI v2.40.0+
 > - Git 2.40.0+
 
@@ -218,7 +220,7 @@ Before installing reposync, ensure you have the following dependencies:
 go install github.com/MoshPitCodes/reposync@latest
 ```
 
-This will install the `reposync` binary to your `$GOPATH/bin` directory.
+This installs the `reposync` binary into your `$GOPATH/bin`.
 
 ### Build from Source
 
@@ -233,20 +235,6 @@ go build -o reposync
 # Install globally (optional)
 go install
 ```
-
-### Building with Version Info
-
-```bash
-# Build with version information embedded
-go build -ldflags "-X main.version=1.0.0" -o reposync
-
-# Cross-compile for different platforms
-GOOS=linux GOARCH=amd64 go build -o reposync-linux-amd64
-GOOS=darwin GOARCH=amd64 go build -o reposync-darwin-amd64
-GOOS=windows GOARCH=amd64 go build -o reposync-windows-amd64.exe
-```
-
-<br/>
 
 ## 3. **Configuration**
 
@@ -285,7 +273,7 @@ Settings are persisted to `~/.config/reposync/config.json` and include:
 - Target directory for synchronized repositories
 - Source directories for local repository scanning
 - Default GitHub owner
-- Recent owners list (for quick switching)
+- Recent owners and templates (for quick switching)
 
 <br/>
 
@@ -301,17 +289,18 @@ Launch the interactive TUI menu with tabbed interface:
 reposync
 ```
 
-This launches a tabbed interface with three modes:
+This opens a 4-tab interface:
 - **Personal (Tab 1)** - Browse your personal GitHub repositories
 - **Organizations (Tab 2)** - Browse organization repositories
 - **Local (Tab 3)** - Browse local Git repositories from configured directories
+- **Templates (Tab 4)** - Select a template source/files and sync into local repositories
 
 ### GitHub Mode
 
 Sync repositories from GitHub interactively:
 
 ```bash
-# Launch GitHub mode (Personal tab by default)
+# Launch GitHub mode
 reposync github
 
 # Launch with specific owner/organization
@@ -323,6 +312,11 @@ Batch mode to clone specific repositories:
 ```bash
 reposync github --owner MoshPitCodes --batch repo1 repo2 repo3
 ```
+
+`reposync github` requires an owner from one of:
+- `--owner`
+- `REPOSYNC_GITHUB_OWNER`
+- persisted settings (`Default Owner` in the settings overlay)
 
 ### Local Mode
 
@@ -344,7 +338,7 @@ reposync local --batch /path/to/repo1 /path/to/repo2
 
 ```bash
 reposync                                         # Launch interactive TUI with tabs
-reposync github                                  # GitHub interactive mode (Personal tab)
+reposync github                                  # GitHub interactive mode (requires owner config)
 reposync github --owner <owner>                  # GitHub mode with specific owner
 reposync github --owner <owner> --batch <repos...>  # Batch clone repos
 reposync local                                   # Local interactive mode
@@ -357,27 +351,28 @@ reposync local --batch <paths...>                # Batch copy repos
 
 <details>
 <summary>
-<b>Tab Navigation</b> - Switch between Personal, Organizations, and Local modes
+<b>Tab Navigation</b> - Switch between Personal, Organizations, Local, and Templates modes
 </summary>
 
 - **Personal (1)**: View your personal GitHub repositories
 - **Organizations (2)**: View organization repositories (use `o` to switch owners)
 - **Local (3)**: View local repositories from configured directories
-- **Switch Tabs**: Press `1`, `2`, or `3` to jump directly, or use `tab`/`shift+tab` to cycle
+- **Templates (4)**: Select template source/files and sync into target repos
+- **Switch Tabs**: Press `1`, `2`, `3`, or `4` to jump directly, or use `tab`/`shift+tab` to cycle
 
 </details>
 
 <details>
 <summary>
-<b>Repository List View</b> - Navigate, select, and manage repositories
+<b>Repository List View</b> - Navigate, filter, and sync repositories
 </summary>
 
-- **Navigation**: Use `↑`/`↓` or `k`/`j` to navigate, `pgup`/`pgdown` for page scrolling
+- **Navigation**: `↑`/`↓` or `k`/`j`; use `pgup`/`pgdown` for paging
 - **Selection**: Press `space` to toggle selection of individual repositories
 - **Select All**: Press `a` to select all repositories in the current list
 - **Deselect All**: Press `n` to deselect all repositories
-- **Search**: Press `/` to enter search/filter mode (real-time filtering)
-- **Sort**: Press `s` to cycle through sort modes (name, updated, stars, size)
+- **Search**: Press `/` for real-time filtering
+- **Sort**: Press `s` to cycle sort modes (name, updated, stars, size)
 - **Owner**: Press `o` to open the owner selector (GitHub modes only)
 - **Settings**: Press `c` to open configuration settings
 - **Help**: Press `?` to view all keyboard shortcuts
@@ -391,10 +386,22 @@ reposync local --batch <paths...>                # Batch copy repos
 <b>Search and Filter</b> - Real-time repository filtering
 </summary>
 
-- Type to filter repositories by name in real-time
-- Filter applies immediately as you type
-- Press `enter` or `esc` to exit search mode and return to normal navigation
+- Type to filter repositories by name; filtering updates immediately
+- Press `enter` or `esc` to exit search mode
 - Search works across all tabs (Personal, Organizations, Local)
+
+</details>
+
+<details>
+<summary>
+<b>Template Workflow</b> - Multi-step template file sync
+</summary>
+
+- In **Templates** tab, press `s` or `enter` to open the template selector
+- Select source: GitHub (`owner/repo`) or local directory
+- Choose template files from the tree (`space` to toggle)
+- Select target local repositories and run sync
+- Review result summary (synced/skipped/errors)
 
 </details>
 
@@ -409,13 +416,11 @@ reposync local --batch <paths...>                # Batch copy repos
 reposync
 
 # In the TUI:
-# 1. Press '1' for Personal repos or '2' for Organizations
-# 2. Press 'o' to switch owner (if needed)
-# 3. Use arrow keys or j/k to navigate
-# 4. Press 'space' to select repositories
-# 5. Press '/' to search/filter
-# 6. Press 's' to change sort order
-# 7. Press 'enter' to clone selected repositories
+# 1. Press '1' (Personal) or '2' (Organizations)
+# 2. Press 'o' to switch owner if needed
+# 3. Select repos with 'space'
+# 4. Optional: '/' to filter, 's' to sort
+# 5. Press 'enter' to clone selected repositories
 ```
 
 ### Batch Clone Specific Repositories
@@ -438,10 +443,9 @@ export REPOSYNC_SOURCE_DIRS="$HOME/dev:$HOME/projects"
 reposync
 
 # In the TUI:
-# 1. Press '3' to switch to Local tab
-# 2. Browse discovered repositories from configured directories
-# 3. Select repositories with 'space'
-# 4. Press 'enter' to copy to target directory
+# 1. Press '3' for Local tab
+# 2. Select repositories with 'space'
+# 3. Press 'enter' to copy to target directory
 ```
 
 ### Batch Copy Local Repositories
